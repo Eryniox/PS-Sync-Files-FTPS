@@ -24,7 +24,7 @@ If ($DBFile -and (Test-Path -Path $DBFile -ErrorAction SilentlyContinue))
 {
     $DateTime = Get-Date -Format "yyyy-MM-dd-HH-mm"
     Copy-Item -Path $DBFile -Destination ($SFFConfig.DBArchive + "\SFF-DB-" + $DateTime + ".json") -Force
-    $FileFolderDB = Get-Content -Raw -Path $DBFile | ConvertFrom-Json
+    $FileFolderDB = Get-Content -Raw -Path $DBFile -Encoding UTF8 | ConvertFrom-Json
     #Import-Clixml -Path $DBFile
 } Else {
     $FileFolderDB = @()
@@ -34,7 +34,7 @@ $NewDBFiles = @()
 foreach ($CurrentSyncPath in $SFFConfig.SyncPathArray)
 {
     $CurrentDBFiles = $FileFolderDB | Where-Object {$_.DBName -like $CurrentSyncPath.DBName} # | Select-Object -ExpandProperty SyncName
-    $CurrentLocalFiles = Get-ChildItem $SFFConfig.LocalPath -Recurse -Force -File | 
+    $CurrentLocalFiles = Get-ChildItem $CurrentSyncPath.LocalPath -Recurse -Force -File | 
         Select-Object -Property BaseName, Mode, Name, Length, DirectoryName, Directory, 
         FullName, Extension, CreationTime, LastWriteTime, 
         @{l='SyncName';e={ $_.FullName.ToString() -replace [Regex]::Escape($CurrentSyncPath.LocalPath),"" }}, 
@@ -44,4 +44,4 @@ foreach ($CurrentSyncPath in $SFFConfig.SyncPathArray)
     $NewDBFiles += $TotalCurrentFiles
 }
 
-$NewDBFiles | ConvertTo-Json  | Set-Content -Path $DBFile -Force 
+$NewDBFiles | ConvertTo-Json  | Set-Content -Path $DBFile -Force -Encoding UTF8

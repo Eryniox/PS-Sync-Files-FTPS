@@ -6,9 +6,12 @@ $Version = 0.01
 $ConfigFile = $PSScriptRoot + "\config.clixml"
 
 $AllSyncFolders = @{
-    Server = "ftps.example.com"
+    Server = "ftps.notaserver.example.com"
+    Port = 21
+    TlsThumbPrint = "11-22-33-44-55-66-77-88-99-00-aa-bb-cc-dd-ee-ff-gg-hh-ii-jj"
     DBArchive = "C:\Scripts\DBBackup"
     ScriptBackup = "C:\Scripts\symlik\Backup"
+    DownloadFolder = "C:\symlink\Download"
     DBFileName = "SFF-DB.json"
     SyncPathArray = @(
         @{  
