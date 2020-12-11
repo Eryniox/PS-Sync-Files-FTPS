@@ -3,6 +3,15 @@ Sync a Library of files to another site - by FTPS
 
 
 ### Temporary Commit message
+Inital Sync files v0.02
+Time to test:
+Run-SFFSync.ps1
+- Time for first live test
+Add-SFFConfig.ps1
+- More config options needed!
+Update-SFFDataBase.ps1
+- Bugfixes - tested OK!
+
 Inital Database files v0.01
 Files:
 Update-FFSGit.ps1
