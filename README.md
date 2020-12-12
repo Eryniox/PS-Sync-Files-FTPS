@@ -4,6 +4,10 @@ Sync a Library of files to another site - by FTPS
 
 ### Temporary Commit message
 Inital Sync files v0.02
+Run-SFFSync.ps1
+- Tested and working. 
+
+Inital Sync files v0.02
 Time to test:
 Run-SFFSync.ps1
 - Time for first live test
