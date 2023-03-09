@@ -5,7 +5,7 @@
 #<WorkingDirectory>C:\Scripts\PS-Sync-Files-FTPS
 
 [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSProvideDefaultParameterValue", "Version")]
-$Version = 0.05
+$Version = 0.06
 
 $ConfigFile = $PSScriptRoot + "\config.clixml"
 $CredentialFile = $PSScriptRoot + "\ftps-credentials.clixml"
@@ -213,6 +213,7 @@ try {
                 $WildCardMatchArray = $CurrentRemoteReplaceName -split "\\"
                 $WildCardMatch = ($WildCardMatchArray[0], ( $WildCardMatchArray[1] -replace " ","*" ) +
                     $WildCardMatchArray[2..($WildCardMatchArray.Length)]) -join "\"
+                $WildCardMatch = $WildCardMatch.replace("[","*").replace("]","*")
                 $CurrentMatch = $false
                 Write-Host "Potential download. Doublechecking: $CurrentRemoteReplaceName - Wildcard: $WildCardMatch."
                 foreach ($CurrentDBFilesListTest in $CurrentDBFilesList)
