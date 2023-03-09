@@ -69,7 +69,6 @@ Function Get-PlainUsernamePassword
 
 Function Get-FreeSpace {
     param ([string]$Path)
-    $Path = "N:\01-Innkommende\PlexIgnore"
     $Volume = Get-Volume -FilePath $Path
     If ($Volume) { Return $Volume.SizeRemaining }
 
