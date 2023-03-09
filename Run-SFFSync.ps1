@@ -1,12 +1,20 @@
 #Requires -Version 5
 
+#<Command>C:\WINDOWS\system32\WindowsPowerShell\v1.0\powershell.exe</Command>
+#<Arguments>-ExecutionPolicy Bypass -File "C:\Scripts\PS-Sync-Files-FTPS\Run-SFFSync.ps1"
+#<WorkingDirectory>C:\Scripts\PS-Sync-Files-FTPS
+
 [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSProvideDefaultParameterValue", "Version")]
-$Version = 0.03
+$Version = 0.04
 
 $ConfigFile = $PSScriptRoot + "\config.clixml"
 $CredentialFile = $PSScriptRoot + "\ftps-credentials.clixml"
 
-$Blacklist = @("*\Kaptein Sabeltann - Hidden\*")
+$Blacklist = @("*\Kaptein Sabeltann - Hidden\*",
+    "*\Dave.Chappelle-The.Kennedy.Center.Mark.Twain.Prize.for.American.Humor.2020.NORDIC.720p.NF.WEBRIP.DD.5.1.h264-FULLTUMMY\*")
+#
+$DownloadFolderMinimumFreeSpace = 80GB
+
 
 If (Test-Path -Path $ConfigFile -ErrorAction SilentlyContinue)
 {
@@ -59,6 +67,63 @@ Function Get-PlainUsernamePassword
   Return $SecureCredential
 }
 
+Function Get-FreeSpace {
+    param ([string]$Path)
+    $Path = "N:\01-Innkommende\PlexIgnore"
+    $Volume = Get-Volume -FilePath $Path
+    If ($Volume) { Return $Volume.SizeRemaining }
+
+    $DriveSpace =  Get-CimInstance -Class Win32_LogicalDisk | Where-Object {$_.DeviceID -like ($Path.Substring(0,1)) }
+    If ($DriveSpace) { Return $DriveSpace.FreeSpace }
+
+    # Determine all single-letter drive names.
+    $takenDriveLetters = (Get-PSDrive).Name -like '?'
+
+    # Find the first unused drive letter.
+    # Note: In PowerShell (Core) 7+ you can simplify [char[]] (0x41..0x5a) to
+    #       'A'..'Z'
+    $firstUnusedDriveLetter = [char[]] (0x41..0x5a) | 
+    Where-Object { $_ -notin $takenDriveLetters } | Select-Object -first 1
+
+    # Temporarily map the target UNC path to a drive letter...
+    $null = net use ${firstUnusedDriveLetter}: $Path /persistent:no
+    # ... and obtain the resulting drive's free space ...
+    $freeSpace = (Get-PSDrive $firstUnusedDriveLetter).Free
+    # ... and delete the mapping again.
+    $null = net use ${firstUnusedDriveLetter}: /delete
+
+    #$freeSpace # output
+    If ($freeSpace) { Return $freeSpace }
+
+    $SMBMapping = Get-SMBMapping | Where-Object {$_.LocalPath}
+    $PathDrive = $Path.Substring(0, [Math]::Min($Path.Length,2) )
+    If ( $PathDrive -in $SMBMapping.LocalPath ) {
+        $CurrentSMB = $SMBMapping | Where-Object {$_.LocalPath -eq $PathDrive}
+        $NewPath = $CurrentSMB.RemotePath + $Path.Substring(2, ($Path.Length - 2 ) )
+    
+        # Determine all single-letter drive names.
+        $takenDriveLetters = (Get-PSDrive).Name -like '?'
+
+        # Find the first unused drive letter.
+        # Note: In PowerShell (Core) 7+ you can simplify [char[]] (0x41..0x5a) to
+        #       'A'..'Z'
+        $firstUnusedDriveLetter = [char[]] (0x41..0x5a) | 
+        Where-Object { $_ -notin $takenDriveLetters } | Select-Object -first 1
+
+        # Temporarily map the target UNC path to a drive letter...
+        $null = net use ${firstUnusedDriveLetter}: $NewPath /persistent:no
+        # ... and obtain the resulting drive's free space ...
+        $freeSpace = (Get-PSDrive $firstUnusedDriveLetter).Free
+        # ... and delete the mapping again.
+        $null = net use ${firstUnusedDriveLetter}: /delete
+
+        #$freeSpace # output
+        If ($freeSpace) { Return $freeSpace }
+    }
+
+    Return 0
+}
+
 Function Update-SFFDataBase
 {
     param (
@@ -100,6 +165,7 @@ If (!($ConfigCredential))
 
 $Credential = Get-PlainUsernamePassword -ConfigCredential $ConfigCredential 
 $SFFConfig.TlsThumbPrint = $SFFConfig.TlsThumbPrint -replace " ","-"
+$DownloadFolderNoFreeSpace = $false
 
 $Splash = @{
     HostName    = $SFFConfig.Server
@@ -175,9 +241,15 @@ try {
                     }
                     Move-Item -Path $DownloadPathFile -Destination $NewPath
                 }
-                
+            }
+            $CurrentFreeSpace = Get-FreeSpace -Path $SFFConfig.DownloadFolder
+            If ($CurrentFreeSpace -lt $DownloadFolderMinimumFreeSpace) {
+                $DownloadFolderNoFreeSpace = $true
+                Write-Warning "Not enough free space in download! Aborting!"
+                break
             }
         }
+        If ($DownloadFolderNoFreeSpace) { break }
     }
     #$Database = Update-SFFDataBase -Config $SFFConfig -Database $FileFolderDB -NewFile $DBFile
 }
