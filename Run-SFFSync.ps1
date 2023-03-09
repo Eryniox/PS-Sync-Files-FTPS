@@ -5,7 +5,7 @@
 #<WorkingDirectory>C:\Scripts\PS-Sync-Files-FTPS
 
 [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSProvideDefaultParameterValue", "Version")]
-$Version = 0.04
+$Version = 0.05
 
 $ConfigFile = $PSScriptRoot + "\config.clixml"
 $CredentialFile = $PSScriptRoot + "\ftps-credentials.clixml"
@@ -226,6 +226,14 @@ try {
                 }
                 If ( $CurrentMatch ) { continue }
 
+                #Check free space before download:
+                $CurrentFreeSpace = Get-FreeSpace -Path $SFFConfig.DownloadFolder
+                If ($CurrentFreeSpace -lt $DownloadFolderMinimumFreeSpace) {
+                    $DownloadFolderNoFreeSpace = $true
+                    Write-Warning "Not enough free space in download! Aborting!"
+                    break
+                }
+
                 #Time to download file!:
                 $DownloadPathFile = Join-Path -Path $SFFConfig.DownloadFolder -ChildPath $CurrentRemoteFile.Name
                 $NewPath = $CurrentSyncPath.LocalPath + $CurrentRemoteFile.SyncName -replace [Regex]::Escape("/"),"\"
@@ -240,12 +248,6 @@ try {
                     }
                     Move-Item -Path $DownloadPathFile -Destination $NewPath
                 }
-            }
-            $CurrentFreeSpace = Get-FreeSpace -Path $SFFConfig.DownloadFolder
-            If ($CurrentFreeSpace -lt $DownloadFolderMinimumFreeSpace) {
-                $DownloadFolderNoFreeSpace = $true
-                Write-Warning "Not enough free space in download! Aborting!"
-                break
             }
         }
         If ($DownloadFolderNoFreeSpace) { break }
