@@ -239,7 +239,9 @@ try {
                 $DownloadPathFile = Join-Path -Path $SFFConfig.DownloadFolder -ChildPath $CurrentRemoteFile.Name
                 $NewPath = $CurrentSyncPath.LocalPath + $CurrentRemoteFile.SyncName -replace [Regex]::Escape("/"),"\"
                 Write-Host "Downloading: $($CurrentRemoteFile.FullName) - $CurrentRemoteReplaceName to: $DownloadPathFile, and moving to: $NewPath"
-                $Result = Receive-WinSCPItem -RemotePath $CurrentRemoteFile.FullName -LocalPath $DownloadPathFile
+                $RemoteFileEscaped = ConvertTo-WinSCPEscapedString -FileMask $CurrentRemoteFile.FullName
+                Write-Host "Escaped path: $($RemoteFileEscaped)"
+                $Result = Receive-WinSCPItem -RemotePath $RemoteFileEscaped -LocalPath $DownloadPathFile
                 If ( $Result.IsSuccess )
                 {
                     $ParentFolder = Split-Path -Path $NewPath -Parent
