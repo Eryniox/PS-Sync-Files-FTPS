@@ -29,7 +29,8 @@ If ($SFFConfig.DownloadFolder -and (Test-Path -Path $SFFConfig.DownloadFolder -E
     $DeletePartialDownloads = Get-ChildItem -Path $SFFConfig.DownloadFolder
     foreach ($DeleteFile in $DeletePartialDownloads)
     {
-        Remove-Item -Path $DeleteFile.FullName
+        #Remove-Item -Path $DeleteFile.FullName
+        $DeleteFile | Remove-Item
     }
 } Else {
     Write-Warning "No Download-folder! Aborting..."
