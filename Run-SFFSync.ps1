@@ -249,7 +249,8 @@ try {
                     {
                         mkdir $ParentFolder
                     }
-                    Move-Item -Path $DownloadPathFile -Destination $NewPath
+                    #Move-Item -Path $DownloadPathFile -Destination $NewPath
+                    Move-Item -LiteralPath $DownloadPathFile -Destination $NewPath
                 }
             }
         }
